@@ -1,6 +1,7 @@
 # Project Overview
 
-This project is a header-only C++ library that implements a sparse set data structure.
+Single file, header-only implementation of sparse set data structure.
+
 Pretty much have the same API as std::set (maybe)
 
 ## Build & Run
