@@ -7,13 +7,13 @@
 #include <vector>
 
 #ifndef INIT_SPARSE_SIZE
-#    define INIT_SPARSE_SIZE 64
+#    define INIT_SPARSE_SIZE 32
 #endif
 #ifndef LOAD_FACTOR
 #    define LOAD_FACTOR 0.7
 #endif
 #ifndef SPARSE_SIZE_GROW
-#    define SPARSE_SIZE_GROW 1.5
+#    define SPARSE_SIZE_GROW 2
 #endif
 
 template <
