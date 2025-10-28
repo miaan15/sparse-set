@@ -33,46 +33,59 @@ ctest --test-dir build/test --output-on-failure
 
 int main() {
     sparse_set<int> int_set;
+    std::cout << "::int set" << "\n";
 
     int_set.insert(10);
+    std::cout << "insert " << 10 << "\n";
     int_set.emplace(20);
+    std::cout << "emplace " << 20 << "\n";
     int_set.insert(30);
+    std::cout << "insert " << 30 << "\n";
 
-    std::cout << "Elements in the set: ";
+    std::cout << "elements: ";
     for (const auto &element : int_set) {
         std::cout << element << " ";
     }
     std::cout << "\n";
 
     if (auto it = int_set.find(20); it != int_set.end()) {
-        std::cout << "Found element: " << *it << "\n";
+        std::cout << "found: " << *it << "\n";
     }
 
     int_set.erase(20);
+    std::cout << "erase " << 20 << "\n";
 
-    std::cout << "Elements after erasing 20: ";
+    std::cout << "elements: ";
     std::ranges::for_each(int_set, [](const auto &element) -> auto {
         std::cout << element << " ";
     });
-    std::cout << "\n";
+    std::cout << "\n\n";
 
     sparse_set<std::string> string_set;
+    std::cout << "::string set" << "\n";
 
     string_set.insert("hello");
-    string_set.emplace("world");
+    string_set.emplace("sparse");
 
-    std::cout << "String elements: ";
+    std::cout << "elements: ";
     for (const auto &element : string_set) {
         std::cout << element << " ";
     }
-    std::cout << "\n";
+    std::cout << std::endl;
 
     return 0;
 }
 ```
 ```
-Elements in the set: 10 20 30 
-Found element: 20
-Elements after erasing 20: 10 30 
-String elements: hello world 
+::int set
+insert 10
+emplace 20
+insert 30
+elements: 10 20 30 
+found: 20
+erase 20
+elements: 10 30 
+
+::string set
+elements: hello sparse 
 ```
