@@ -17,4 +17,6 @@ add_executable(sparse_set_test main.cpp)
 target_link_libraries(sparse_set_test PRIVATE GTest::gtest_main)
 target_include_directories(sparse_set_test PRIVATE ../src)
 
+setup_compiler_flags(sparse_set_test)
+
 add_test(NAME sparse_set_test COMMAND sparse_set_test)

@@ -9,6 +9,26 @@
 
 #include "sparse-set.hpp"
 
+#ifdef __GNUC__
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wsign-compare"
+#    pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
+#ifdef __clang__
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wsign-compare"
+#    pragma clang diagnostic ignored "-Wsign-conversion"
+#    pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#endif
+
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4018)
+#    pragma warning(disable : 4244)
+#    pragma warning(disable : 4267)
+#endif
+
 // ============================================================================
 // Test Fixture
 // ============================================================================
@@ -1184,3 +1204,15 @@ int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
+#ifdef __GNUC__
+#    pragma GCC diagnostic pop
+#endif
+
+#ifdef __clang__
+#    pragma clang diagnostic pop
+#endif
+
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
