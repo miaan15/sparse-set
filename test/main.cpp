@@ -694,6 +694,168 @@ TEST_F(SparseSetTest, IteratorStdDistance) {
 // Rehashing Tests
 // ============================================================================
 
+TEST_F(SparseSetTest, SwapBasic) {
+    sparse_set<int> set1;
+    sparse_set<int> set2;
+
+    set1.insert(1);
+    set1.insert(2);
+    set1.insert(3);
+
+    set2.insert(10);
+    set2.insert(20);
+
+    const size_t set1_size = set1.size();
+    const size_t set2_size = set2.size();
+
+    set1.swap(set2);
+
+    EXPECT_EQ(set1.size(), set2_size);
+    EXPECT_EQ(set2.size(), set1_size);
+
+    EXPECT_TRUE(set1.contains(10));
+    EXPECT_TRUE(set1.contains(20));
+    EXPECT_FALSE(set1.contains(1));
+    EXPECT_FALSE(set1.contains(2));
+    EXPECT_FALSE(set1.contains(3));
+
+    EXPECT_TRUE(set2.contains(1));
+    EXPECT_TRUE(set2.contains(2));
+    EXPECT_TRUE(set2.contains(3));
+    EXPECT_FALSE(set2.contains(10));
+    EXPECT_FALSE(set2.contains(20));
+}
+
+TEST_F(SparseSetTest, SwapEmptyWithNonEmpty) {
+    sparse_set<int> set1;
+    sparse_set<int> set2;
+
+    set1.insert(5);
+    set1.insert(15);
+    set1.insert(25);
+
+    ASSERT_EQ(set1.size(), 3u);
+    ASSERT_TRUE(set2.empty());
+
+    set1.swap(set2);
+
+    EXPECT_TRUE(set1.empty());
+    EXPECT_EQ(set2.size(), 3u);
+    EXPECT_TRUE(set2.contains(5));
+    EXPECT_TRUE(set2.contains(15));
+    EXPECT_TRUE(set2.contains(25));
+}
+
+TEST_F(SparseSetTest, SwapBothEmpty) {
+    sparse_set<int> set1;
+    sparse_set<int> set2;
+
+    ASSERT_TRUE(set1.empty());
+    ASSERT_TRUE(set2.empty());
+
+    set1.swap(set2);
+
+    EXPECT_TRUE(set1.empty());
+    EXPECT_TRUE(set2.empty());
+}
+
+TEST_F(SparseSetTest, SwapNonMember) {
+    sparse_set<int> set1;
+    sparse_set<int> set2;
+
+    set1.insert(100);
+    set1.insert(200);
+
+    set2.insert(300);
+    set2.insert(400);
+    set2.insert(500);
+
+    swap(set1, set2);
+
+    EXPECT_EQ(set1.size(), 3u);
+    EXPECT_EQ(set2.size(), 2u);
+
+    EXPECT_TRUE(set1.contains(300));
+    EXPECT_TRUE(set1.contains(400));
+    EXPECT_TRUE(set1.contains(500));
+
+    EXPECT_TRUE(set2.contains(100));
+    EXPECT_TRUE(set2.contains(200));
+}
+
+TEST_F(SparseSetTest, SwapSelf) {
+    sparse_set<int> set1;
+    set1.insert(1);
+    set1.insert(2);
+    set1.insert(3);
+
+    const size_t original_size = set1.size();
+
+    set1.swap(set1);
+
+    EXPECT_EQ(set1.size(), original_size);
+    EXPECT_TRUE(set1.contains(1));
+    EXPECT_TRUE(set1.contains(2));
+    EXPECT_TRUE(set1.contains(3));
+}
+
+TEST_F(SparseSetTest, SwapOperationsAfter) {
+    sparse_set<int> set1;
+    sparse_set<int> set2;
+
+    set1.insert(1);
+    set1.insert(2);
+    set2.insert(10);
+
+    set1.swap(set2);
+
+    auto ins1 = set1.insert(20);
+    EXPECT_TRUE(ins1.second);
+    EXPECT_TRUE(set1.contains(10));
+    EXPECT_TRUE(set1.contains(20));
+    EXPECT_EQ(set1.size(), 2u);
+
+    auto ins2 = set2.insert(3);
+    EXPECT_TRUE(ins2.second);
+    EXPECT_EQ(set2.erase(1), 1u);
+    EXPECT_FALSE(set2.contains(1));
+    EXPECT_TRUE(set2.contains(2));
+    EXPECT_TRUE(set2.contains(3));
+    EXPECT_EQ(set2.size(), 2u);
+}
+
+TEST_F(SparseSetTest, SwapIterators) {
+    sparse_set<int> set1;
+    sparse_set<int> set2;
+
+    set1.insert(1);
+    set1.insert(2);
+    set1.insert(3);
+
+    set2.insert(10);
+    set2.insert(20);
+
+    set1.swap(set2);
+
+    int count1 = 0;
+    for (auto it = set1.begin(); it != set1.end(); ++it) {
+        ++count1;
+        EXPECT_TRUE(*it == 10 || *it == 20);
+    }
+    EXPECT_EQ(count1, 2);
+
+    int count2 = 0;
+    for (auto it = set2.begin(); it != set2.end(); ++it) {
+        ++count2;
+        EXPECT_TRUE(*it == 1 || *it == 2 || *it == 3);
+    }
+    EXPECT_EQ(count2, 3);
+}
+
+// ============================================================================
+// Rehashing Tests
+// ============================================================================
+
 TEST_F(SparseSetTest, RehashingOnInsert) {
     // Initial size is 64, load factor is 0.7
     // Should rehash at floor(64 * 0.7) = 44 elements

@@ -107,6 +107,11 @@ public:
     auto count(const value_type &value) const -> size_t;
     auto contains(const value_type &value) const -> bool;
 
+    auto swap(sparse_set &other) noexcept(
+        std::allocator_traits<allocator_type>::is_always_equal::value
+        && std::is_nothrow_swappable_v<hasher> && std::is_nothrow_swappable_v<key_equal>
+    ) -> void;
+
     auto rehash(size_t new_sparse_size) -> void;
 
     auto reserve(size_t count) -> void;
@@ -252,6 +257,15 @@ inline auto _sparse_set_def::contains(const value_type &value) const -> bool {
 }
 
 template <typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline auto _sparse_set_def::swap(sparse_set &other) noexcept(
+    std::allocator_traits<allocator_type>::is_always_equal::value
+    && std::is_nothrow_swappable_v<hasher> && std::is_nothrow_swappable_v<key_equal>
+) -> void {
+    dense_arr.swap(other.dense_arr);
+    sparse_arr.swap(other.sparse_arr);
+}
+
+template <typename T, typename Hash, typename KeyEqual, typename Allocator>
 inline auto _sparse_set_def::rehash(size_t new_sparse_size) -> void {
     std::fill(sparse_arr.begin(), sparse_arr.end(), sparse_arr_entry{.pos = 0, .dist = 0});
     sparse_arr.resize(new_sparse_size);
@@ -322,6 +336,13 @@ inline auto _sparse_set_def::remove_sparse_by_hash(size_t hashed) -> void {
 
         curr = next;
     }
+}
+
+template <typename T, typename Hash, typename KeyEqual, typename Allocator>
+auto swap(
+    sparse_set<T, Hash, KeyEqual, Allocator> &lhs, sparse_set<T, Hash, KeyEqual, Allocator> &rhs
+) noexcept(noexcept(lhs.swap(rhs))) -> void {
+    lhs.swap(rhs);
 }
 
 #undef _sparse_set_def
