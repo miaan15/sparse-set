@@ -170,6 +170,59 @@ TEST_F(SparseSetTest, InsertNegativeNumbers) {
     EXPECT_EQ(int_set.size(), 3);
 }
 
+TEST_F(SparseSetTest, InsertArrayOfNumbers) {
+    std::vector<int> a = {1, 2, 3};
+
+    int_set.insert(a.begin(), a.end());
+
+    EXPECT_TRUE(int_set.contains(1));
+    EXPECT_TRUE(int_set.contains(2));
+    EXPECT_TRUE(int_set.contains(3));
+    EXPECT_EQ(int_set.size(), 3);
+
+    int_set.insert({1, 3, 5});
+
+    EXPECT_TRUE(int_set.contains(1));
+    EXPECT_TRUE(int_set.contains(2));
+    EXPECT_TRUE(int_set.contains(3));
+    EXPECT_TRUE(int_set.contains(5));
+    EXPECT_EQ(int_set.size(), 4);
+}
+
+TEST_F(SparseSetTest, InsertRanges) {
+    int_set.insert_range(std::views::iota(1, 4));
+
+    EXPECT_TRUE(int_set.contains(1));
+    EXPECT_TRUE(int_set.contains(2));
+    EXPECT_TRUE(int_set.contains(3));
+    EXPECT_EQ(int_set.size(), 3);
+
+    int_set.insert_range(std::views::iota(1, 6) | std::views::filter([](int x) -> bool {
+                             return x % 2 == 1;
+                         }));
+
+    EXPECT_TRUE(int_set.contains(5));
+    EXPECT_EQ(int_set.size(), 4);
+
+    int_set.insert_range(
+        std::views::iota(4, 12) | std::views::filter([](int x) -> bool { return x % 2 == 0; })
+        | std::views::transform([](int x) -> int { return x; })
+    );
+
+    EXPECT_TRUE(int_set.contains(4));
+    EXPECT_TRUE(int_set.contains(6));
+    EXPECT_TRUE(int_set.contains(8));
+    EXPECT_TRUE(int_set.contains(10));
+    EXPECT_EQ(int_set.size(), 8);
+
+    std::vector<int> extra{3, 7, 7, 9};
+    int_set.insert_range(extra | std::views::all);
+
+    EXPECT_TRUE(int_set.contains(7));
+    EXPECT_TRUE(int_set.contains(9));
+    EXPECT_EQ(int_set.size(), 10);
+}
+
 // ============================================================================
 // Emplace Tests
 // ============================================================================
