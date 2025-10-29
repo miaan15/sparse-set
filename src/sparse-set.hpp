@@ -7,6 +7,8 @@
 #include <ranges>
 #include <vector>
 
+#include "./common.hpp"
+
 #ifndef INIT_SPARSE_SIZE
 #    define INIT_SPARSE_SIZE 32
 #endif
@@ -16,14 +18,6 @@
 #ifndef SPARSE_SIZE_GROW
 #    define SPARSE_SIZE_GROW 2
 #endif
-
-template <class R, class T>
-concept container_compatible_range
-    = std::ranges::input_range<R>
-      && (std::convertible_to<T, std::ranges::range_reference_t<R>>
-          || std::constructible_from<T, std::ranges::range_reference_t<R>>
-          || std::convertible_to<T, std::ranges::range_rvalue_reference_t<R>>
-          || std::constructible_from<T, std::ranges::range_rvalue_reference_t<R>>);
 
 template <
     typename T,

@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_set>
 
+#include "sparse-key-set.hpp"
 #include "sparse-set.hpp"
 
 #ifdef __GNUC__
@@ -39,6 +40,16 @@ protected:
     sparse_set<std::string> str_set;
 };
 
+class SparseKeySetTest : public ::testing::Test {
+protected:
+    sparse_key_set<int, int>            int_map;
+    sparse_key_set<std::string, double> str_map;
+};
+
+// ============================================================================
+// SPARSE SET
+// ============================================================================
+//
 // ============================================================================
 // Constructor and Assignment Tests
 // ============================================================================
@@ -1409,6 +1420,316 @@ TEST_F(SparseSetTest, SetOperationsSimulation) {
     for (int i = 5; i < 10; ++i) {
         EXPECT_TRUE(std::find(intersection.begin(), intersection.end(), i) != intersection.end());
     }
+}
+
+// ============================================================================
+// SPARSE KEY SET
+// ============================================================================
+//
+// ============================================================================
+// Constructor and Assignment Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, DefaultConstructor) {
+    sparse_key_set<int, int> map;
+    EXPECT_EQ(map.size(), 0);
+    EXPECT_TRUE(map.empty());
+}
+
+TEST_F(SparseKeySetTest, CopyConstructor) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+
+    sparse_key_set<int, int> copy(int_map);
+    EXPECT_EQ(copy.size(), 2);
+    EXPECT_EQ(copy.at(1), 100);
+    EXPECT_EQ(copy.at(2), 200);
+}
+
+TEST_F(SparseKeySetTest, MoveConstructor) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+
+    sparse_key_set<int, int> moved(std::move(int_map));
+    EXPECT_EQ(moved.size(), 2);
+    EXPECT_EQ(moved.at(1), 100);
+}
+
+TEST_F(SparseKeySetTest, CopyAssignment) {
+    int_map.insert({1, 100});
+    sparse_key_set<int, int> other;
+    other = int_map;
+    EXPECT_EQ(other.size(), 1);
+    EXPECT_EQ(other.at(1), 100);
+}
+
+TEST_F(SparseKeySetTest, MoveAssignment) {
+    int_map.insert({1, 100});
+    sparse_key_set<int, int> other;
+    other = std::move(int_map);
+    EXPECT_EQ(other.size(), 1);
+    EXPECT_EQ(other.at(1), 100);
+}
+
+// ============================================================================
+// Basic Operations Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, InsertPair) {
+    auto [it, inserted] = int_map.insert({1, 100});
+    EXPECT_TRUE(inserted);
+    EXPECT_EQ(*it, 100);
+    EXPECT_EQ(int_map.size(), 1);
+}
+
+TEST_F(SparseKeySetTest, InsertDuplicate) {
+    int_map.insert({1, 100});
+    auto [it, inserted] = int_map.insert({1, 200});
+    EXPECT_FALSE(inserted);
+    EXPECT_EQ(int_map.at(1), 100);
+}
+
+TEST_F(SparseKeySetTest, InsertMultiple) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+    int_map.insert({3, 300});
+    EXPECT_EQ(int_map.size(), 3);
+    EXPECT_EQ(int_map.at(2), 200);
+}
+
+TEST_F(SparseKeySetTest, InsertRange) {
+    std::vector<std::pair<int, int>> vec{{1, 100}, {2, 200}, {3, 300}};
+    int_map.insert(vec.begin(), vec.end());
+    EXPECT_EQ(int_map.size(), 3);
+}
+
+TEST_F(SparseKeySetTest, InsertInitializerList) {
+    int_map.insert({{1, 100}, {2, 200}, {3, 300}});
+    EXPECT_EQ(int_map.size(), 3);
+}
+
+TEST_F(SparseKeySetTest, Emplace) {
+    auto [it, inserted] = int_map.emplace(1, 100);
+    EXPECT_TRUE(inserted);
+    EXPECT_EQ(*it, 100);
+}
+
+// ============================================================================
+// Access Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, OperatorBracket) {
+    int_map[1] = 100;
+    EXPECT_EQ(int_map[1], 100);
+    EXPECT_EQ(int_map.size(), 1);
+}
+
+TEST_F(SparseKeySetTest, OperatorBracketDefaultInsert) {
+    int value = int_map[1];
+    EXPECT_EQ(value, 0);
+    EXPECT_EQ(int_map.size(), 1);
+}
+
+TEST_F(SparseKeySetTest, At) {
+    int_map.insert({1, 100});
+    EXPECT_EQ(int_map.at(1), 100);
+}
+
+TEST_F(SparseKeySetTest, AtThrowsOutOfRange) {
+    EXPECT_THROW(int_map.at(1), std::out_of_range);
+}
+
+TEST_F(SparseKeySetTest, AtConst) {
+    int_map.insert({1, 100});
+    const auto &const_map = int_map;
+    EXPECT_EQ(const_map.at(1), 100);
+}
+
+// ============================================================================
+// Lookup Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, Find) {
+    int_map.insert({1, 100});
+    auto it = int_map.find(1);
+    EXPECT_NE(it, int_map.end());
+    EXPECT_EQ(*it, 100);
+}
+
+TEST_F(SparseKeySetTest, FindNotFound) {
+    auto it = int_map.find(1);
+    EXPECT_EQ(it, int_map.end());
+}
+
+TEST_F(SparseKeySetTest, Contains) {
+    int_map.insert({1, 100});
+    EXPECT_TRUE(int_map.contains(1));
+    EXPECT_FALSE(int_map.contains(2));
+}
+
+TEST_F(SparseKeySetTest, Count) {
+    int_map.insert({1, 100});
+    EXPECT_EQ(int_map.count(1), 1);
+    EXPECT_EQ(int_map.count(2), 0);
+}
+
+// ============================================================================
+// Erase Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, Erase) {
+    int_map.insert({1, 100});
+    EXPECT_EQ(int_map.erase(1), 1);
+    EXPECT_EQ(int_map.size(), 0);
+    EXPECT_FALSE(int_map.contains(1));
+}
+
+TEST_F(SparseKeySetTest, EraseNonExistent) {
+    EXPECT_EQ(int_map.erase(1), 0);
+}
+
+TEST_F(SparseKeySetTest, EraseMultiple) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+    int_map.insert({3, 300});
+
+    int_map.erase(2);
+    EXPECT_EQ(int_map.size(), 2);
+    EXPECT_TRUE(int_map.contains(1));
+    EXPECT_FALSE(int_map.contains(2));
+    EXPECT_TRUE(int_map.contains(3));
+}
+
+TEST_F(SparseKeySetTest, Clear) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+    int_map.clear();
+    EXPECT_EQ(int_map.size(), 0);
+    EXPECT_TRUE(int_map.empty());
+}
+
+// ============================================================================
+// Iterator Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, Iterators) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+
+    int count = 0;
+    for (auto it = int_map.begin(); it != int_map.end(); ++it) {
+        count++;
+    }
+    EXPECT_EQ(count, 2);
+}
+
+TEST_F(SparseKeySetTest, RangeBasedFor) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+
+    int sum = 0;
+    for (const auto &value : int_map) {
+        sum += value;
+    }
+    EXPECT_EQ(sum, 300);
+}
+
+TEST_F(SparseKeySetTest, ReverseIterators) {
+    int_map.insert({1, 100});
+    int_map.insert({2, 200});
+
+    int count = 0;
+    for (auto it = int_map.rbegin(); it != int_map.rend(); ++it) {
+        count++;
+    }
+    EXPECT_EQ(count, 2);
+}
+
+// ============================================================================
+// Capacity Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, Reserve) {
+    int_map.reserve(100);
+    EXPECT_GE(int_map.capacity(), 100);
+}
+
+TEST_F(SparseKeySetTest, Rehash) {
+    int_map.insert({1, 100});
+    size_t old_sparse_size = int_map.sparse_size();
+    int_map.rehash(old_sparse_size * 2);
+    EXPECT_EQ(int_map.sparse_size(), old_sparse_size * 2);
+    EXPECT_TRUE(int_map.contains(1));
+}
+
+// ============================================================================
+// Swap Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, Swap) {
+    int_map.insert({1, 100});
+    sparse_key_set<int, int> other;
+    other.insert({2, 200});
+
+    int_map.swap(other);
+    EXPECT_EQ(int_map.size(), 1);
+    EXPECT_EQ(other.size(), 1);
+    EXPECT_TRUE(int_map.contains(2));
+    EXPECT_TRUE(other.contains(1));
+}
+
+TEST_F(SparseKeySetTest, StdSwap) {
+    int_map.insert({1, 100});
+    sparse_key_set<int, int> other;
+    other.insert({2, 200});
+
+    swap(int_map, other);
+    EXPECT_TRUE(int_map.contains(2));
+    EXPECT_TRUE(other.contains(1));
+}
+
+// ============================================================================
+// String Key Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, StringKeys) {
+    str_map.insert({"hello", 1.5});
+    str_map.insert({"world", 2.5});
+
+    EXPECT_EQ(str_map.size(), 2);
+    EXPECT_EQ(str_map.at("hello"), 1.5);
+    EXPECT_TRUE(str_map.contains("world"));
+}
+
+TEST_F(SparseKeySetTest, StringOperatorBracket) {
+    str_map["test"] = 3.14;
+    EXPECT_EQ(str_map["test"], 3.14);
+}
+
+// ============================================================================
+// Large Scale Tests
+// ============================================================================
+
+TEST_F(SparseKeySetTest, LargeInsertion) {
+    for (int i = 0; i < 1000; ++i) {
+        int_map.insert({i, i * 10});
+    }
+    EXPECT_EQ(int_map.size(), 1000);
+    EXPECT_EQ(int_map.at(500), 5000);
+}
+
+TEST_F(SparseKeySetTest, LargeInsertionAndErasure) {
+    for (int i = 0; i < 1000; ++i) {
+        int_map.insert({i, i * 10});
+    }
+
+    for (int i = 0; i < 500; ++i) {
+        int_map.erase(i);
+    }
+
+    EXPECT_EQ(int_map.size(), 500);
+    EXPECT_FALSE(int_map.contains(100));
+    EXPECT_TRUE(int_map.contains(600));
 }
 
 // ============================================================================
